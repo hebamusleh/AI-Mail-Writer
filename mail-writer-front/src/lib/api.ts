@@ -9,7 +9,7 @@ export interface GenerateEmailResponse {
   body: string;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ;
 const REQUEST_TIMEOUT_MS = 30_000;
 
 export async function generateEmail(
