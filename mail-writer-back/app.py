@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 from dotenv import load_dotenv
@@ -8,6 +9,17 @@ from openai import OpenAI
 
 load_dotenv()
 
+# ── Startup validation (US20) ─────────────────────────────────────────────────
+
+_openai_key = os.environ.get("OPENAI_API_KEY")
+if not _openai_key:
+    logging.warning(
+        "OPENAI_API_KEY is not set. "
+        "The /api/generate endpoint will fail until it is configured in .env."
+    )
+
+# ── App setup ─────────────────────────────────────────────────────────────────
+
 app = Flask(__name__)
 
 CORS(
@@ -15,7 +27,7 @@ CORS(
     origins=os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(","),
 )
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+client = OpenAI(api_key=_openai_key)
 
 VALID_TYPES = {"professional", "friendly", "formal", "follow-up", "sales"}
 VALID_TONES = {"polite", "confident", "friendly", "persuasive"}
@@ -24,7 +36,11 @@ MAX_DESCRIPTION_LENGTH = 500
 
 @app.route("/api/health", methods=["GET"])
 def health():
-    return jsonify({"status": "ok"})
+    configured = bool(os.environ.get("OPENAI_API_KEY"))
+    return jsonify({
+        "status": "ok" if configured else "degraded",
+        "openai_configured": configured,
+    })
 
 
 @app.route("/api/generate", methods=["POST"])
@@ -60,6 +76,9 @@ def generate_email():
         '- "body": the full email body text\n\n'
         "Do not include any other text or formatting outside the JSON."
     )
+
+    if not os.environ.get("OPENAI_API_KEY"):
+        return jsonify({"error": "AI service is not configured. Contact the administrator."}), 500
 
     try:
         response = client.chat.completions.create(

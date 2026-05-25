@@ -250,3 +250,85 @@ API keys and environment variables are never accidentally committed.
 - `mail-writer-front/.env.local` is listed in `.gitignore`.
 - The venv directory remains excluded.
 - node_modules remain excluded.
+
+---
+
+# Sprint 3 - Reliability, UX Refinements & Mobile
+
+## User Story 16: Request Timeout (NFR-001)
+
+**As a user**
+I want the application to stop waiting if AI takes too long
+**So that**
+I am not left staring at a spinner indefinitely.
+
+### Acceptance Criteria
+
+- All API requests have a 10-second timeout (matching NFR-001).
+- If the request times out, a clear error message is shown: "Request timed out. Please try again."
+- After a timeout the user can immediately retry.
+- The request is aborted cleanly (no dangling network request).
+
+---
+
+## User Story 17: Persistent Result During Regeneration
+
+**As a user**
+I want to see my previous result while a new one is being generated
+**So that**
+I do not lose context and can compare the new result when it arrives.
+
+### Acceptance Criteria
+
+- The result card stays visible during regeneration.
+- A loading overlay covers the result card with a "Regenerating…" indicator.
+- The previous subject and body remain readable beneath the overlay.
+- When regeneration completes the overlay disappears and new content is shown.
+- Copy buttons remain functional on the previous result during regeneration.
+
+---
+
+## User Story 18: Reset / Start Over
+
+**As a user**
+I want to clear the form and start fresh
+**So that**
+I can write a completely different email without manually deleting my previous input.
+
+### Acceptance Criteria
+
+- A "Start over" action is available after a result is generated.
+- Clicking it clears the description, resets type and tone to defaults, and hides the result.
+- The action is not available during loading.
+
+---
+
+## User Story 19: Mobile Responsive Layout (NFR-003)
+
+**As a user on a mobile device**
+I want the form to be usable on small screens
+**So that**
+I can generate emails from my phone without horizontal scrolling or broken layouts.
+
+### Acceptance Criteria
+
+- On screens narrower than 640px the Email Type and Tone dropdowns stack vertically.
+- The header, main container, and result card have correct padding on mobile.
+- All buttons remain fully tappable on mobile screen sizes.
+- No horizontal overflow occurs on any supported screen size.
+
+---
+
+## User Story 20: Backend Startup Validation
+
+**As a developer**
+I want the backend to detect and report a missing API key at startup
+**So that**
+Misconfiguration is caught immediately rather than at the first user request.
+
+### Acceptance Criteria
+
+- If `OPENAI_API_KEY` is not set, a clear warning is logged to the console at startup.
+- The `GET /api/health` endpoint returns `{ "status": "degraded", "openai_configured": false }` when the key is missing.
+- The `GET /api/health` endpoint returns `{ "status": "ok", "openai_configured": true }` when the key is set.
+- The `/api/generate` endpoint returns a descriptive 500 error when the key is missing.

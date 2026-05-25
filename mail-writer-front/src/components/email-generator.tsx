@@ -1,14 +1,27 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
-import { Loader2, Copy, Check, RefreshCw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { generateEmail } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import {
+  Check,
+  Copy,
+  Loader2,
+  PenLine,
+  RefreshCw,
+  Sparkles,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const EMAIL_TYPES = ["Professional", "Friendly", "Formal", "Follow-up", "Sales"] as const;
+const EMAIL_TYPES = [
+  "Professional",
+  "Friendly",
+  "Formal",
+  "Follow-up",
+  "Sales",
+] as const;
 const TONES = ["Polite", "Confident", "Friendly", "Persuasive"] as const;
 const MAX_DESCRIPTION_LENGTH = 500;
 const TOAST_DURATION_MS = 2500;
@@ -21,7 +34,7 @@ type Tone = (typeof TONES)[number];
 const SELECT_CLASS = cn(
   "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm",
   "text-foreground focus:outline-none focus:ring-2 focus:ring-ring",
-  "focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
+  "focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50",
 );
 
 // ── Inline toast hook ─────────────────────────────────────────────────────────
@@ -36,7 +49,12 @@ function useToast() {
     timerRef.current = setTimeout(() => setMessage(null), TOAST_DURATION_MS);
   }, []);
 
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    },
+    [],
+  );
 
   return { toastMessage: message, showToast };
 }
@@ -58,7 +76,7 @@ function CopyIconButton({ onCopy }: { onCopy: () => Promise<void> }) {
       title="Copy to clipboard"
       className={cn(
         "inline-flex items-center justify-center rounded-md p-1 transition-colors",
-        "text-muted-foreground hover:text-foreground hover:bg-muted"
+        "text-muted-foreground hover:text-foreground hover:bg-muted",
       )}
     >
       {done ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
@@ -74,16 +92,23 @@ export function EmailGenerator() {
   const [tone, setTone] = useState<Tone>("Polite");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ subject: string; body: string } | null>(null);
+  const [result, setResult] = useState<{
+    subject: string;
+    body: string;
+  } | null>(null);
 
   const { toastMessage, showToast } = useToast();
 
+  // true only during re-generation (result already exists while loading)
+  const isRegenerating = loading && result !== null;
+
   const charsUsed = description.length;
-  const charsLeft = MAX_DESCRIPTION_LENGTH - charsUsed;
-  const isNearLimit = charsLeft < 50;
+  const isNearLimit = MAX_DESCRIPTION_LENGTH - charsUsed < 50;
   const canGenerate = description.trim().length > 0 && !loading;
 
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleDescriptionChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
     const val = e.target.value;
     if (val.length > MAX_DESCRIPTION_LENGTH) return;
     setDescription(val);
@@ -106,11 +131,22 @@ export function EmailGenerator() {
       setResult(data);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Something went wrong. Please try again."
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.",
       );
     } finally {
       setLoading(false);
     }
+  };
+
+  // US18: reset everything back to initial state
+  const handleReset = () => {
+    setDescription("");
+    setEmailType("Professional");
+    setTone("Polite");
+    setResult(null);
+    setError(null);
   };
 
   const copyToClipboard = useCallback(
@@ -118,22 +154,25 @@ export function EmailGenerator() {
       await navigator.clipboard.writeText(text);
       showToast(`${label} copied to clipboard`);
     },
-    [showToast]
+    [showToast],
   );
 
-  const handleCopyFull = () => {
+  const handleCopyFull = async () => {
     if (!result) return;
-    return copyToClipboard(`Subject: ${result.subject}\n\n${result.body}`, "Email");
+    await copyToClipboard(
+      `Subject: ${result.subject}\n\n${result.body}`,
+      "Email",
+    );
   };
 
-  const handleCopySubject = () => {
+  const handleCopySubject = async () => {
     if (!result) return;
-    return copyToClipboard(result.subject, "Subject");
+    await copyToClipboard(result.subject, "Subject");
   };
 
-  const handleCopyBody = () => {
+  const handleCopyBody = async () => {
     if (!result) return;
-    return copyToClipboard(result.body, "Body");
+    await copyToClipboard(result.body, "Body");
   };
 
   return (
@@ -141,10 +180,12 @@ export function EmailGenerator() {
       <div className="w-full space-y-5">
         {/* ── Input card ── */}
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-5">
-
           {/* Description textarea */}
           <div className="space-y-2">
-            <label htmlFor="description" className="text-sm font-medium text-foreground">
+            <label
+              htmlFor="description"
+              className="text-sm font-medium text-foreground"
+            >
               Describe your email
             </label>
             <textarea
@@ -158,24 +199,29 @@ export function EmailGenerator() {
                 "w-full resize-none rounded-lg border border-input bg-background",
                 "px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground",
                 "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
-                "disabled:cursor-not-allowed disabled:opacity-50"
+                "disabled:cursor-not-allowed disabled:opacity-50",
               )}
             />
             {/* Character counter */}
             <p
               className={cn(
                 "text-right text-xs tabular-nums",
-                isNearLimit ? "text-destructive font-medium" : "text-muted-foreground"
+                isNearLimit
+                  ? "text-destructive font-medium"
+                  : "text-muted-foreground",
               )}
             >
               {charsUsed} / {MAX_DESCRIPTION_LENGTH}
             </p>
           </div>
 
-          {/* Type + Tone dropdowns */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* US19: grid-cols-1 on mobile, grid-cols-2 on sm+ */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label htmlFor="email-type" className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="email-type"
+                className="text-sm font-medium text-foreground"
+              >
                 Email Type
               </label>
               <select
@@ -186,13 +232,18 @@ export function EmailGenerator() {
                 className={SELECT_CLASS}
               >
                 {EMAIL_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="tone" className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="tone"
+                className="text-sm font-medium text-foreground"
+              >
                 Tone
               </label>
               <select
@@ -203,7 +254,9 @@ export function EmailGenerator() {
                 className={SELECT_CLASS}
               >
                 {TONES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
                 ))}
               </select>
             </div>
@@ -226,7 +279,7 @@ export function EmailGenerator() {
             size="lg"
             className="w-full gap-2"
           >
-            {loading ? (
+            {loading && !isRegenerating ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
                 Generating…
@@ -240,9 +293,21 @@ export function EmailGenerator() {
           </Button>
         </div>
 
-        {/* ── Result card ── */}
-        {result && !loading && (
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-5">
+        {/* ── Result card — US17: always shown when result exists ── */}
+        {result && (
+          <div className="relative rounded-2xl border border-border bg-card p-6 shadow-sm space-y-5">
+            {/* US17: Regeneration overlay */}
+            {isRegenerating && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-background/70 backdrop-blur-[2px]">
+                <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 shadow-sm">
+                  <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Regenerating…
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Result header */}
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -280,7 +345,9 @@ export function EmailGenerator() {
                 <CopyIconButton onCopy={handleCopySubject} />
               </div>
               <div className="rounded-lg border border-border bg-muted/40 px-4 py-3">
-                <p className="text-sm font-medium text-foreground">{result.subject}</p>
+                <p className="text-sm font-medium text-foreground">
+                  {result.subject}
+                </p>
               </div>
             </div>
 
@@ -300,6 +367,22 @@ export function EmailGenerator() {
             </div>
           </div>
         )}
+
+        {/* US18: Start over — visible only after generation, not during loading */}
+        {result && !loading && (
+          <div className="flex justify-center pb-4">
+            <button
+              onClick={handleReset}
+              className={cn(
+                "flex items-center gap-1.5 text-sm text-muted-foreground",
+                "transition-colors hover:text-foreground",
+              )}
+            >
+              <PenLine className="size-3.5" />
+              Start over with a new email
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── Toast notification ── */}
@@ -310,7 +393,7 @@ export function EmailGenerator() {
           className={cn(
             "fixed bottom-5 right-5 z-50 flex items-center gap-2",
             "rounded-lg bg-foreground px-4 py-3 text-sm font-medium text-background shadow-lg",
-            "animate-in fade-in slide-in-from-bottom-2 duration-200"
+            "animate-in fade-in slide-in-from-bottom-2 duration-200",
           )}
         >
           <Check className="size-4 shrink-0" />
