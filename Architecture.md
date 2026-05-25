@@ -47,11 +47,11 @@ The AI service generates email content.
 
 ## 3.1 Tech Stack
 
-- Next.js 15
+- Next.js 16
 - TypeScript
-- Tailwind CSS
-- shadcn/ui
-- Axios
+- Tailwind CSS v4
+- shadcn/ui (Radix UI)
+- Native Fetch API
 
 ---
 
@@ -61,30 +61,23 @@ The AI service generates email content.
 src/
 │
 ├── app/
-│   ├── page.tsx
-│   ├── layout.tsx
-│   └── globals.css
+│   ├── page.tsx             # Home page — renders EmailGenerator
+│   ├── layout.tsx           # Root layout + app metadata
+│   └── globals.css          # Tailwind + shadcn theme variables
 │
 ├── components/
-│   ├── Layout ├── Header
-|   |          └── Sidebar
-|   |
-│   └── ui
-│
-├── modules/
-│   └── mail-writer├── email-form.tsx
-|                  ├── email-result.tsx
-|                  └── ai-mail-page.tsx
-|
-├── services/
-│   └── api.ts
-│
-├── types/
-│   └── email.ts
+│   ├── email-generator.tsx  # Main client component (all UI + state)
+│   └── ui/
+│       ├── button.tsx
+│       └── input.tsx
 │
 └── lib/
+    ├── api.ts               # generateEmail() — fetch wrapper
     └── utils.ts
 ```
+
+Note: No Sidebar component. SRS constraints prohibit user accounts and storage.
+Note: No Header/Sidebar navigation — single-page, stateless MVP.
 
 ---
 
@@ -134,10 +127,11 @@ src/
 
 ## 4.1 Tech Stack
 
-- Flask
-- Python
+- Flask 3.x
+- Python 3.11+
 - Flask-CORS
-- Requests (for OpenAI API)
+- openai (Python SDK)
+- python-dotenv
 
 ---
 
@@ -146,18 +140,13 @@ src/
 ```text
 mail-writer-back/
 │
-├── app.py
-├── routes/
-│   └── email_routes.py
-│
-├── services/
-│   └── ai_service.py
-│
-├── models/
-│   └── email_model.py
-│
-└── config.py
+├── app.py          # Flask app + /api/generate route (single file for MVP)
+├── requirements.txt
+└── .env.example
 ```
+
+Note: No routes/, services/, models/ split — MVP scope does not justify this overhead.
+One endpoint, one file. Refactor if endpoints exceed 3 in future sprints.
 
 ---
 
@@ -176,25 +165,64 @@ mail-writer-back/
 ### Generate Email
 
 ```http
-POST /api/generate-email
+POST /api/generate
 ```
 
 ### Request Body
 
 ```json
 {
-  "description": "Write an apology email for delay",
-  "emailType": "Professional"
+  "description": "Write an apology email for a project delivery delay",
+  "type": "professional",
+  "tone": "polite"
 }
 ```
 
-### Response
+**Field rules:**
+- `description` — required, non-empty string
+- `type` — one of: `professional`, `friendly`, `formal`, `follow-up`, `sales` (default: `professional`)
+- `tone` — one of: `polite`, `confident`, `friendly`, `persuasive` (default: `polite`)
+
+### Success Response — 200
 
 ```json
 {
   "subject": "Project Delay Apology",
   "body": "Dear Client..."
 }
+```
+
+### Error Response — 400
+
+```json
+{
+  "error": "Description is required."
+}
+```
+
+### Error Response — 500
+
+```json
+{
+  "error": "AI service error. Please try again."
+}
+```
+
+---
+
+# 4.5 Environment Variables
+
+### Backend — `mail-writer-back/.env`
+```
+OPENAI_API_KEY=sk-...
+FLASK_ENV=development
+PORT=5000
+ALLOWED_ORIGINS=http://localhost:3000
+```
+
+### Frontend — `mail-writer-front/.env.local`
+```
+NEXT_PUBLIC_API_URL=http://localhost:5000
 ```
 
 ---

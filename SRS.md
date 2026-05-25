@@ -180,6 +180,26 @@ The system shall allow users to copy generated content.
 
 ---
 
+## FR-009 Tone Selection
+
+### Description
+
+The system shall allow users to select the tone of the generated email.
+
+### Acceptance Criteria
+
+Available options:
+
+- Polite
+- Confident
+- Friendly
+- Persuasive
+
+- Polite is selected by default.
+- Selected tone is included in the AI request.
+
+---
+
 ## FR-006 Regenerate Email
 
 ### Description
