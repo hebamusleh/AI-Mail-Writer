@@ -264,7 +264,7 @@ I am not left staring at a spinner indefinitely.
 
 ### Acceptance Criteria
 
-- All API requests have a 10-second timeout (matching NFR-001).
+- All API requests have a 30-second timeout.
 - If the request times out, a clear error message is shown: "Request timed out. Please try again."
 - After a timeout the user can immediately retry.
 - The request is aborted cleanly (no dangling network request).
@@ -328,7 +328,7 @@ Misconfiguration is caught immediately rather than at the first user request.
 
 ### Acceptance Criteria
 
-- If `OPENAI_API_KEY` is not set, a clear warning is logged to the console at startup.
+- If `GROQ_API_KEY` is not set, a clear warning is logged to the console at startup.
 - The `GET /api/health` endpoint returns `{ "status": "degraded", "openai_configured": false }` when the key is missing.
 - The `GET /api/health` endpoint returns `{ "status": "ok", "openai_configured": true }` when the key is set.
 - The `/api/generate` endpoint returns a descriptive 500 error when the key is missing.

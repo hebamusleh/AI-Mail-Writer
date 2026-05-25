@@ -37,7 +37,7 @@ The AI service generates email content.
            v
 +----------------------+
 |     AI Provider      |
-|      OpenAI          |
+|    Groq (Llama)      |
 +----------------------+
 ```
 
@@ -127,11 +127,12 @@ Note: No Header/Sidebar navigation — single-page, stateless MVP.
 
 ## 4.1 Tech Stack
 
-- Flask 3.x
+- Flask 3.1
 - Python 3.11+
-- Flask-CORS
-- openai (Python SDK)
+- Flask-CORS 6.x
+- groq (Python SDK — llama-3.3-70b-versatile)
 - python-dotenv
+- gunicorn (production server)
 
 ---
 
@@ -214,7 +215,7 @@ POST /api/generate
 
 ### Backend — `mail-writer-back/.env`
 ```
-OPENAI_API_KEY=sk-...
+GROQ_API_KEY=gsk_...
 FLASK_ENV=development
 PORT=5000
 ALLOWED_ORIGINS=http://localhost:3000
@@ -238,17 +239,26 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 
 ---
 
+## Model
+
+- Provider: Groq
+- Model: `llama-3.3-70b-versatile`
+- Response format: JSON object (`{ "subject": "", "body": "" }`)
+
+---
+
 ## Example Prompt
 
 ```text
-Write a professional email.
+Generate a professional email with a polite tone.
 
-Type: Professional
-Description: Apology for 3-day delay in project delivery.
+Context: Apology for 3-day delay in project delivery.
 
-Return:
-- Subject
-- Email Body
+Return ONLY JSON:
+{
+  "subject": "",
+  "body": ""
+}
 ```
 
 ---
@@ -298,11 +308,11 @@ Return:
 Frontend (Next.js)
 → Vercel
 
-Backend (Flask)
+Backend (Flask + gunicorn)
 → Railway / Render
 
 AI Service
-→ OpenAI API
+→ Groq API (llama-3.3-70b-versatile)
 ```
 
 ---
